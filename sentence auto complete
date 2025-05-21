@@ -1,0 +1,76 @@
+from collections import defaultdict, Counter
+
+# Sample text dataset (add more data here for better results)
+sample_text = """
+Artificial intelligence is changing the world.
+Artificial intelligence helps in data analysis.
+Artificial intelligence can assist in medical diagnosis.
+Artificial intelligence improves user experience.
+Artificial intelligence is widely used in education.
+Artificial intelligence will shape the future of technology.
+"""
+
+# Preprocess the text
+def preprocess(text):
+    text = text.lower().replace('\n', ' ')
+    return text.split()
+
+# Build trigram model
+def build_trigram_model(words):
+    model = defaultdict(list)
+    for i in range(len(words) - 2):
+        key = (words[i], words[i + 1])
+        model[key].append(words[i + 2])
+    return model
+
+# Auto-complete paragraph from a single word
+def autocomplete_paragraph(model, words, start_word, max_sentences=5, max_words_per_sentence=20):
+    start_word = start_word.lower()
+    paragraph = []
+    sentence_count = 0
+
+    # Try to find a bigram starting with the input word
+    for i in range(len(words) - 1):
+        if words[i] == start_word:
+            w1, w2 = words[i], words[i + 1]
+            break
+    else:
+        return "Starting word not found in dataset."
+
+    # Loop to generate multiple sentences
+    while sentence_count < max_sentences:
+        current_sentence = [w1, w2]
+        for _ in range(max_words_per_sentence):
+            key = (w1, w2)
+            if key not in model:
+                break
+ next_word = Counter(model[key]).most_common(1)[0][0]
+            current_sentence.append(next_word)
+            w1, w2 = w2, next_word
+            if next_word.endswith('.'):
+                break
+        paragraph.append(' '.join(current_sentence).capitalize())
+        sentence_count += 1
+
+        # Try to find next sentence start
+        found = False
+        for i in range(len(words) - 1):
+            if words[i] == w1:
+                w1, w2 = words[i], words[i + 1]
+                found = True
+                break
+        if not found:
+            break
+
+    return ' '.join(paragraph)
+
+# MAIN program
+words = preprocess(sample_text)
+model = build_trigram_model(words)
+
+# ✅ Take user input
+user_input = input("Enter the first word: ")
+
+# 🔁 Generate full paragraph
+output_paragraph = autocomplete_paragraph(model, words, user_input)
+print("\nAuto-completed paragraph:\n", output_paragraph)
